@@ -1,4 +1,4 @@
-![Prettyhtml Banner](/logo.png)
+![Prettyhtml Banner](https://github.com/Prettyhtml/prettyhtml/raw/master/logo.png)
 
 [![Build Status](https://dev.azure.com/prettyhtml/Prettyhtml/_apis/build/status/Prettyhtml.prettyhtml)](https://dev.azure.com/prettyhtml/Prettyhtml/_build/latest?definitionId=1)
 [![lerna](https://img.shields.io/badge/maintained%20with-lerna-cc00ff.svg)](https://lernajs.io/)
