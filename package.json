@@ -1,0 +1,27 @@
+{
+  "name": "prettyhtml",
+  "version": "1.0.0",
+  "description": "Wrapper around https://github.com/Prettyhtml/prettyhtml",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sidouglas/prettyhml.git"
+  },
+  "author": "Simon Douglas",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sidouglas/prettyhml/issues"
+  },
+  "homepage": "https://github.com/sidouglas/prettyhml#readme",
+  "devDependencies": {
+    "standard": "^12.0.1"
+  },
+  "dependencies": {
+    "@starptech/prettyhtml": "^0.8.15",
+    "fs-extra": "^7.0.1",
+    "inquirer": "^6.2.1"
+  }
+}
