@@ -20,6 +20,44 @@ module.exports = {
 
     return fileList
   },
+  cleanRoutine () {
+
+  },
+  config: {
+    baseDirectory: null,
+    dialog: null,
+    framework: null,
+    prettyHtml: null,
+    regex: null,
+    singleFilePath: null
+  },
+  async init (config) {
+    this.config = config
+    const singleFileMode = this.singleFileCleanRoutine(config.singleFilePath)
+
+    try {
+      if (singleFileMode) {
+        await singleFileMode()
+      } else {
+        this.config.dialog.choices = this.getDirectories(this.config.baseDirectory)
+        const { list } = await this.prompt(this.config.dialog)
+
+        list.forEach((folder) => {
+          this.allFilesSync(`${config.baseDirectory}/${folder}`).forEach(async (filePath) => {
+            const fileContents = await this.readFile(filePath)
+
+            this.prettyContents = this.getComponentHtml(fileContents)
+            if (this.prettyContents) {
+              this.cleanRoutine()
+            }
+          })
+        })
+      }
+    } catch (error) {
+      console.log(error)
+      process.exit(1)
+    }
+  },
   formatTextNodes () {
     const lines = this.prettyContents.split('\n')
 
@@ -32,7 +70,7 @@ module.exports = {
   getDirectoriesSync (filePath) {
     return fs.readdirSync(filePath).filter(folder => fs.statSync(path.join(filePath, folder)).isDirectory())
   },
-  orderClassNames (prefixes) {
+  orderClassNames () {
     const lines = this.prettyContents.split('\n')
 
     this.prettyContents = lines.map(line => {
@@ -42,7 +80,7 @@ module.exports = {
         const classes = matches[2].trim().split(' ')
         const componentClasses = []
         const frameworkClasses = []
-        const frameworkPrefixes = prefixes
+        const frameworkPrefixes = this.config.framework.utilClasses
 
         classes.forEach(className => {
           const frameWorkClass = frameworkPrefixes.find(prefix => className.startsWith(prefix));
@@ -63,9 +101,9 @@ module.exports = {
 
     return this
   },
-  prettyHtml (config) {
-    this.prettyContents = prettyhtml(this.prettyContents, config).contents
-
+  prettyHtml () {
+    const prettyConfig = this.config.prettyHtml
+    this.prettyContents = prettyhtml(this.prettyContents, prettyConfig).contents
     return this
   },
   prompt (dialog) {
@@ -82,6 +120,19 @@ module.exports = {
       console.error('No file was passed in')
       process.exit(1)
     }
+  },
+  relativePath (filePath) {
+    return path.resolve(__dirname, '..', filePath)
+  },
+  rightTrim () {
+    this.prettyContents = this.prettyContents.split('\n').map((line) => line.trimRight()).join('\n')
+
+    return this
+  },
+  save () {
+    const newContents = this.originalContents.replace(this.config.regex.find, this.config.regex.replace(this.prettyContents))
+
+    this.writeFile(newContents)
   },
   selfCloseTags () {
     let needsClose = false
@@ -121,6 +172,20 @@ module.exports = {
     }).join('\n')
 
     return this
+  },
+  singleFileCleanRoutine (filePath) {
+    if (filePath) {
+      return async () => {
+        filePath = filePath.startsWith('.') ? this.relativePath(filePath) : filePath
+        this.prettyContents = await this.readFile(filePath)
+        this.config.regex = {
+          find: /[^]+/,
+          replace: (content) => content
+        }
+        this.config.framework.colOffset = 0
+        this.cleanRoutine()
+      }
+    }
   },
   async writeFile (contents) {
     try {
