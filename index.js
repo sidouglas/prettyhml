@@ -1,7 +1,7 @@
-const prettyhtml = require('@starptech/prettyhtml')
 const fs = require('fs-extra')
-const path = require('path')
 const inquirer = require('inquirer')
+const path = require('path')
+const prettyhtml = require('@starptech/prettyhtml')
 
 module.exports = {
   allFilesSync (dir, filter = ['.js']) {
@@ -39,7 +39,7 @@ module.exports = {
       if (singleFileMode) {
         await singleFileMode()
       } else {
-        this.config.dialog.choices = this.getDirectories(this.config.baseDirectory)
+        this.config.dialog.choices = this.getDirectoriesSync(this.config.baseDirectory)
         const { list } = await this.prompt(this.config.dialog)
 
         list.forEach((folder) => {
