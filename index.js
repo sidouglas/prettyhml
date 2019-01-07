@@ -40,10 +40,13 @@ module.exports = {
         await singleFileMode()
       } else {
         this.config.dialog.choices = this.getDirectoriesSync(this.config.baseDirectory)
-        const { list } = await this.prompt(this.config.dialog)
+
+        let { list, filterOut } = await this.prompt(this.config.dialog)
+
+        filterOut = typeof filterOut === 'string' ? [ filterOut ] : filterOut
 
         list.forEach((folder) => {
-          this.allFilesSync(`${config.baseDirectory}/${folder}`).forEach(async (filePath) => {
+          this.allFilesSync(`${config.baseDirectory}/${folder}`, filterOut).forEach(async (filePath) => {
             const fileContents = await this.readFile(filePath)
 
             this.prettyContents = this.getComponentHtml(fileContents)
@@ -67,8 +70,13 @@ module.exports = {
 
     return this
   },
-  getDirectoriesSync (filePath) {
-    return fs.readdirSync(filePath).filter(folder => fs.statSync(path.join(filePath, folder)).isDirectory())
+  getDirectoriesSync (filePaths) {
+    filePaths = (typeof filePaths === 'string') ? [filePaths] : filePaths
+    const output = []
+    filePaths.forEach(filePath => {
+      output.push(...fs.readdirSync(filePath).filter(folder => fs.statSync(path.join(filePath, folder)).isDirectory()))
+    })
+    return output
   },
   orderClassNames () {
     const lines = this.prettyContents.split('\n')
