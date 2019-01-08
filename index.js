@@ -21,7 +21,8 @@ module.exports = {
     return fileList
   },
   cleanRoutine () {
-
+    console.log('overwrite this method with your own rules');
+    this.prettyHtml().save();
   },
   config: {
     baseDirectory: null,
@@ -33,17 +34,17 @@ module.exports = {
   },
   async init (config) {
     this.config = config
-    const singleFileMode = this.singleFileCleanRoutine(config.singleFilePath)
-
     try {
-      if (singleFileMode) {
-        await singleFileMode()
+      // if theres a process.argv then clean only that file.
+      if (config.singleFile && config.singleFile.filePath) {
+        this.singleFileCleanRoutine() // now run that single clean job
       } else {
+        // present user with menu so they can choose what to run.
         this.config.dialog.choices = this.getDirectoriesSync(this.config.baseDirectory)
 
         let { list, filterOut } = await this.prompt(this.config.dialog)
 
-        filterOut = typeof filterOut === 'string' ? [ filterOut ] : filterOut
+        filterOut = typeof filterOut === 'string' ? [filterOut] : filterOut
 
         list.forEach((folder) => {
           this.allFilesSync(`${config.baseDirectory}/${folder}`, filterOut).forEach(async (filePath) => {
@@ -61,6 +62,7 @@ module.exports = {
       process.exit(1)
     }
   },
+  // wraps single nodes with innerHtml onto 3 lines
   formatTextNodes () {
     const lines = this.prettyContents.split('\n')
 
@@ -70,6 +72,18 @@ module.exports = {
 
     return this
   },
+  // extract just the part we need to format out of the passed in file
+  getComponentHtml (contents) {
+    let componentHtml = ''
+
+    try {
+      componentHtml = contents.match(this.config.regex.find)[1]
+    } catch (e) {
+      console.log(`Could not gather the component template for ${this.filePath}`)
+    }
+
+    return componentHtml
+  },
   getDirectoriesSync (filePaths) {
     filePaths = (typeof filePaths === 'string') ? [filePaths] : filePaths
     const output = []
@@ -78,6 +92,7 @@ module.exports = {
     })
     return output
   },
+  // order classNames, by component first, then remaining framework classes all alpha'd
   orderClassNames () {
     const lines = this.prettyContents.split('\n')
 
@@ -109,6 +124,7 @@ module.exports = {
 
     return this
   },
+  // invoke the original pretty call, which gets us about 80% there with formatting.
   prettyHtml () {
     const prettyConfig = this.config.prettyHtml
     this.prettyContents = prettyhtml(this.prettyContents, prettyConfig).contents
@@ -129,6 +145,7 @@ module.exports = {
       process.exit(1)
     }
   },
+  // returns the absolute path from a relative one
   relativePath (filePath) {
     return path.resolve(__dirname, '..', filePath)
   },
@@ -181,18 +198,20 @@ module.exports = {
 
     return this
   },
-  singleFileCleanRoutine (filePath) {
-    if (filePath) {
-      return async () => {
-        filePath = filePath.startsWith('.') ? this.relativePath(filePath) : filePath
-        this.prettyContents = await this.readFile(filePath)
-        this.config.regex = {
-          find: /[^]+/,
-          replace: (content) => content
-        }
-        this.config.framework.colOffset = 0
-        this.cleanRoutine()
-      }
+  async singleFileCleanRoutine () {
+    let filePath = this.config.singleFile.filePath
+    filePath = filePath.startsWith('.') ? this.relativePath(filePath) : filePath
+
+    // alter the config for singleFile "mode" so that single file's setting are used further on
+    delete this.config.singleFile.filePath
+
+    this.config = { ...this.config, ...this.config.singleFile }
+
+    const fileContents = await this.readFile(filePath)
+    this.prettyContents = this.getComponentHtml(fileContents)
+
+    if (this.prettyContents) {
+      this.cleanRoutine()
     }
   },
   async writeFile (contents) {
