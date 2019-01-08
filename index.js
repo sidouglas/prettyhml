@@ -21,8 +21,8 @@ module.exports = {
     return fileList
   },
   cleanRoutine () {
-    console.log('overwrite this method with your own rules');
-    this.prettyHtml().save();
+    console.log('overwrite this method with your own rules')
+    this.prettyHtml().save()
   },
   config: {
     baseDirectory: null,
@@ -150,7 +150,9 @@ module.exports = {
     return path.resolve(__dirname, '..', filePath)
   },
   rightTrim () {
-    this.prettyContents = this.prettyContents.split('\n').map((line) => line.trimRight()).join('\n')
+    const lines = this.prettyContents.split('\n')
+
+    this.prettyContents = lines.map((line, i) => (i === lines.length - 1) ? line : line.trimRight()).join('\n')
 
     return this
   },
