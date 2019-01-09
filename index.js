@@ -29,7 +29,10 @@ module.exports = {
     dialog: null,
     framework: null,
     prettyHtml: null,
-    regex: null,
+    regex: {
+      find: Function.prototype,
+      replace: Function.prototype
+    },
     singleFilePath: null
   },
   async init (config) {
@@ -77,7 +80,7 @@ module.exports = {
     let componentHtml = ''
 
     try {
-      componentHtml = contents.match(this.config.regex.find)[1]
+      componentHtml = contents.match(this.config.regex.find(this))[1]
     } catch (e) {
       console.log(`Could not gather the component template for ${this.filePath}`)
     }
@@ -157,7 +160,10 @@ module.exports = {
     return this
   },
   save () {
-    const newContents = this.originalContents.replace(this.config.regex.find, this.config.regex.replace(this.prettyContents))
+    const find = this.config.regex.find
+    const replace = this.config.regex.replace
+    // allow file specific clean and replace flexibility
+    const newContents = this.originalContents.replace(find(this), replace(this.prettyContents, this))
 
     this.writeFile(newContents)
   },
