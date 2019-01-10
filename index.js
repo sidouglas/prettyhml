@@ -80,7 +80,7 @@ module.exports = {
     let componentHtml = ''
 
     try {
-      componentHtml = contents.match(this.config.regex.find(this))[1]
+      componentHtml = this.config.regex.find(contents)
     } catch (e) {
       console.log(`Could not gather the component template for ${this.filePath}`)
     }
@@ -153,17 +153,14 @@ module.exports = {
     return path.resolve(__dirname, '..', filePath)
   },
   rightTrim () {
-    const lines = this.prettyContents.split('\n')
-
-    this.prettyContents = lines.map((line, i) => (i === lines.length - 1) ? line : line.trimRight()).join('\n')
+    this.prettyContents = this.prettyContents.split('\n').map((line) => line.trimRight()).join('\n')
 
     return this
   },
   save () {
     const find = this.config.regex.find
     const replace = this.config.regex.replace
-    // allow file specific clean and replace flexibility
-    const newContents = this.originalContents.replace(find(this), replace(this.prettyContents, this))
+    const newContents = this.originalContents.replace(find(this.originalContents), replace(this.prettyContents))
 
     this.writeFile(newContents)
   },
