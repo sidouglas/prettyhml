@@ -50,9 +50,8 @@ module.exports = {
         filterOut = typeof filterOut === 'string' ? [filterOut] : filterOut
 
         list.forEach((folder) => {
-          this.allFilesSync(`${config.baseDirectory}/${folder}`, filterOut).forEach(async (filePath) => {
+          this.allFilesSync(folder, filterOut).forEach(async (filePath) => {
             const fileContents = await this.readFile(filePath)
-
             this.prettyContents = this.getComponentHtml(fileContents)
             if (this.prettyContents) {
               this.cleanRoutine()
@@ -80,7 +79,7 @@ module.exports = {
     let componentHtml = ''
 
     try {
-      componentHtml = this.config.regex.find(contents)
+      componentHtml = this.config.regex.find.call(this, contents)
     } catch (e) {
       console.log(`Could not gather the component template for ${this.filePath}`)
     }
@@ -90,8 +89,16 @@ module.exports = {
   getDirectoriesSync (filePaths) {
     filePaths = (typeof filePaths === 'string') ? [filePaths] : filePaths
     const output = []
+
     filePaths.forEach(filePath => {
-      output.push(...fs.readdirSync(filePath).filter(folder => fs.statSync(path.join(filePath, folder)).isDirectory()))
+      output.push(...fs.readdirSync(filePath)
+        .reduce((acc, folder) => {
+          const fullPath = path.join(filePath, folder)
+          if (fs.statSync(fullPath).isDirectory()) {
+            acc.push(fullPath)
+          }
+          return acc
+        }, []))
     })
     return output
   },
@@ -160,7 +167,7 @@ module.exports = {
   save () {
     const find = this.config.regex.find
     const replace = this.config.regex.replace
-    const newContents = this.originalContents.replace(find(this.originalContents), replace(this.prettyContents))
+    const newContents = this.originalContents.replace(find.call(this, this.originalContents), replace.call(this, this.prettyContents))
 
     this.writeFile(newContents)
   },
