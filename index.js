@@ -2,24 +2,9 @@ const fs = require('fs-extra')
 const inquirer = require('inquirer')
 const path = require('path')
 const prettyhtml = require('@starptech/prettyhtml')
+const glob = require('glob')
 
 module.exports = {
-  allFilesSync (dir, filter = ['.js']) {
-    const fileList = []
-    const filterList = filter
-
-    fs.readdirSync(dir).forEach(file => {
-      const filePath = path.join(dir, file)
-
-      fileList.push(
-        fs.statSync(filePath).isDirectory()
-          ? { [file]: this.allFilesSync(filePath) }
-          : filterList.includes(path.extname(file)) ? filePath : false
-      )
-    })
-
-    return fileList
-  },
   cleanRoutine () {
     console.log('overwrite this method with your own rules')
     this.prettyHtml().save()
@@ -43,20 +28,17 @@ module.exports = {
         this.singleFileCleanRoutine() // now run that single clean job
       } else {
         // present user with menu so they can choose what to run.
-        this.config.dialog.choices = this.getDirectoriesSync(this.config.baseDirectory)
+        this.config.dialog.choices = await this.getDirectoriesSync(this.config.baseDirectory)
 
         let { list, filterOut } = await this.prompt(this.config.dialog)
 
         filterOut = typeof filterOut === 'string' ? [filterOut] : filterOut
-
-        list.forEach((folder) => {
-          this.allFilesSync(folder, filterOut).forEach(async (filePath) => {
+        list.forEach(async (filePath) => {
             const fileContents = await this.readFile(filePath)
             this.prettyContents = this.getComponentHtml(fileContents)
             if (this.prettyContents) {
-              this.cleanRoutine()
+               this.cleanRoutine()
             }
-          })
         })
       }
     } catch (error) {
@@ -86,21 +68,15 @@ module.exports = {
 
     return componentHtml
   },
-  getDirectoriesSync (filePaths) {
-    filePaths = (typeof filePaths === 'string') ? [filePaths] : filePaths
-    const output = []
+  async getDirectoriesSync (globPatterns) {
+    const response = [];
+    const patterns = typeof globPatterns === String ? [globPatterns] : globPatterns;
 
-    filePaths.forEach(filePath => {
-      output.push(...fs.readdirSync(filePath)
-        .reduce((acc, folder) => {
-          const fullPath = path.join(filePath, folder)
-          if (fs.statSync(fullPath).isDirectory()) {
-            acc.push(fullPath)
-          }
-          return acc
-        }, []))
+    await patterns.forEach(async (pattern) => {
+      const paths = await glob(pattern, {mark: true, sync:true});
+      response.push(...paths);
     })
-    return output
+    return response.sort();
   },
   // order classNames, by component first, then remaining framework classes all alpha'd
   orderClassNames () {
@@ -148,7 +124,6 @@ module.exports = {
       await fs.stat(filePath)
       this.filePath = filePath
       this.originalContents = fs.readFileSync(filePath, 'utf8')
-
       return this.originalContents
     } catch (e) {
       console.error('No file was passed in')
