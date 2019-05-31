@@ -146,44 +146,6 @@ module.exports = {
 
     this.writeFile(newContents)
   },
-  selfCloseTags () {
-    const lines = this.prettyContents.split('\n')
-    const selfClosing = [
-      'area',
-      'base',
-      'br',
-      'col',
-      'embed',
-      'hr',
-      'img',
-      'input',
-      'keygen',
-      'link',
-      'meta',
-      'param',
-      'source',
-      'track',
-      'use',
-      'wbr'
-    ]
-    let needsClose = false
-    this.prettyContents = lines.map(line => {
-      selfClosing.forEach((tag) => {
-        if (line.trim().startsWith(`<${tag}`)) {
-          const replacedLine = line.replace(/>($|\<.*)/m, ' />')
-          needsClose = (line === replacedLine)
-          line = replacedLine
-        }
-        if (needsClose && line.trim() === '>') {
-          line = line.replace('>', '/>')
-          needsClose = false
-        }
-      })
-      return line
-    }).join('\n')
-
-    return this
-  },
   async singleFileCleanRoutine () {
     let filePath = this.config.singleFile.filePath
     filePath = filePath.startsWith('.') ? this.relativePath(filePath) : filePath
