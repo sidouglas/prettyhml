@@ -34,11 +34,11 @@ module.exports = {
 
         filterOut = typeof filterOut === 'string' ? [filterOut] : filterOut
         list.forEach(async (filePath) => {
-            const fileContents = await this.readFile(filePath)
-            this.prettyContents = this.getComponentHtml(fileContents)
-            if (this.prettyContents) {
-               this.cleanRoutine()
-            }
+          const fileContents = await this.readFile(filePath)
+          this.prettyContents = this.getComponentHtml(fileContents)
+          if (this.prettyContents) {
+            this.cleanRoutine()
+          }
         })
       }
     } catch (error) {
@@ -69,14 +69,14 @@ module.exports = {
     return componentHtml
   },
   async getDirectoriesSync (globPatterns) {
-    const response = [];
-    const patterns = typeof globPatterns === String ? [globPatterns] : globPatterns;
+    const response = []
+    const patterns = typeof globPatterns === String ? [globPatterns] : globPatterns
 
     await patterns.forEach(async (pattern) => {
-      const paths = await glob(pattern, {mark: true, sync:true});
-      response.push(...paths);
+      const paths = await glob(pattern, { mark: true, sync: true })
+      response.push(...paths)
     })
-    return response.sort();
+    return response.sort()
   },
   // order classNames, by component first, then remaining framework classes all alpha'd
   orderClassNames () {
@@ -147,7 +147,6 @@ module.exports = {
     this.writeFile(newContents)
   },
   selfCloseTags () {
-    let needsClose = false
     const lines = this.prettyContents.split('\n')
     const selfClosing = [
       'area',
@@ -164,23 +163,23 @@ module.exports = {
       'param',
       'source',
       'track',
+      'use',
       'wbr'
-    ].map(tag => `<${tag}`)
-
+    ]
+    let needsClose = false
     this.prettyContents = lines.map(line => {
-      let inspectedLine = line
-      const trimmedLine = inspectedLine.trim()
-
-      if (selfClosing.includes(trimmedLine)) {
-        needsClose = true
-      }
-
-      if (trimmedLine === '>' && needsClose) {
-        inspectedLine = inspectedLine.replace('>', '/>')
-        needsClose = false
-      }
-
-      return inspectedLine
+      selfClosing.forEach((tag) => {
+        if (line.trim().startsWith(`<${tag}`)) {
+          const replacedLine = line.replace(/>($|\<.*)/m, ' />')
+          needsClose = (line === replacedLine)
+          line = replacedLine
+        }
+        if (needsClose && line.trim() === '>') {
+          line = line.replace('>', '/>')
+          needsClose = false
+        }
+      })
+      return line
     }).join('\n')
 
     return this
@@ -207,5 +206,22 @@ module.exports = {
     } catch (e) {
       console.error(e)
     }
+  },
+  // ensures alt is written alt="" when void
+  voidAttributes (voidAttributes = ['alt']) {
+    const lines = this.prettyContents.split('\n')
+
+    this.prettyContents = lines.map((line) => {
+      let l = line
+      voidAttributes.forEach((attr) => {
+        if (l.indexOf(attr) > -1) {
+          l = l.replace(attr, `${attr}=""`)
+        }
+      })
+
+      return l
+    }).join('\n')
+
+    return this
   }
 }
