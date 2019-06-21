@@ -1,8 +1,9 @@
+const _escape = require('lodash/escape')
 const fs = require('fs-extra')
+const glob = require('glob')
 const inquirer = require('inquirer')
 const path = require('path')
 const prettyhtml = require('@starptech/prettyhtml')
-const glob = require('glob')
 
 module.exports = {
   cleanRoutine () {
@@ -176,7 +177,7 @@ module.exports = {
     this.prettyContents = lines.map((line) => {
       let l = line
       voidAttributes.forEach((attr) => {
-        if (l.indexOf(attr) > -1) {
+        if (l.match(new RegExp(_escape(`${attr}$`), 'g'))) {
           l = l.replace(attr, `${attr}=""`)
         }
       })
