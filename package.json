@@ -22,7 +22,7 @@
     "standard": "^12.0.1"
   },
   "dependencies": {
-    "@starptech/prettyhtml": "^0.9.0",
+    "@starptech/prettyhtml": "^0.10.0",
     "fs-extra": "^7.0.1",
     "inquirer": "^6.2.1"
   }

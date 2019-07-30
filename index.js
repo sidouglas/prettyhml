@@ -86,7 +86,8 @@ module.exports = {
     this.prettyContents = lines.map(line => {
       const matches = line.match(/(.*\s+class=")(.*)(?:")(.*)/)
 
-      if (matches) {
+      // there's a handlebars variable as a class name, do not sort it.
+      if (matches && !matches.includes('{')) {
         const classes = matches[2].trim().split(' ')
         const componentClasses = []
         const frameworkClasses = []
